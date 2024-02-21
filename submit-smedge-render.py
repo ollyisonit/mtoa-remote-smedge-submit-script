@@ -86,7 +86,7 @@ class SubmitUI:
                 "(Arnold) Whether TX files should be generated. Turn off "
                 "if there are multiple render nodes, as multiple machines generating "
                 "TX files at once can cause conflicts"
-            ),
+            )
         )
         force_tx_check = pm.checkBoxGrp(
             label="Force TX Files",
@@ -101,8 +101,8 @@ class SubmitUI:
             parent=render_options_layout,
         )
         frame_range_label = pm.text(label="Frame Range", parent=frame_range_row)
-        start_frame_field = pm.textField(width=30, parent=frame_range_row)
-        end_frame_field = pm.textField(width=30, parent=frame_range_row)
+        start_frame_field = pm.intField(width=30, parent=frame_range_row)
+        end_frame_field = pm.intField(width=30, parent=frame_range_row)
 
         render_layers_frame = pm.frameLayout(
             "Enabled Render Layers",
@@ -111,22 +111,7 @@ class SubmitUI:
             parent=render_options_layout,
         )
         render_layers_layout = pm.columnLayout(parent=render_layers_frame)
-        for layer in self.state.render_layers:
-            render_layers_row = pm.rowLayout(
-                numberOfColumns=4,
-                columnWidth=[
-                    [1, self.TICKBOX_WIDTH],
-                    [2, self.LABEL_WIDTH - self.TICKBOX_WIDTH],
-                ],
-                parent=render_layers_layout,
-            )
-            render_layer_check = pm.checkBox(label="", parent=render_layers_row)
-            render_layer_label = pm.text(label=layer.name, parent=render_layers_row)
-            render_layer_packet_label = pm.text(
-                label="Packet Size", parent=render_layers_row
-            )
-            render_layer_packet_entry = pm.textField(parent=render_layers_row)
-
+        
         output_options_frame = pm.frameLayout(
             "Output Options", collapsable=False, marginHeight=5, parent=main_layout
         )
@@ -155,12 +140,34 @@ class SubmitUI:
                                                                         [generate_config, "left", self.MARGIN, 50]])
 
         def apply_state_to_ui(state: SubmitUIState):
-            
-            pass
-
+            pm.checkBoxGrp(generate_tx_check, edit=True, value1=state.generate_tx)
+            pm.checkBoxGrp(force_tx_check, edit=True, value1=state.force_tx)
+            pm.intField(start_frame_field, edit=True, value=state.start_frame)
+            pm.intField(end_frame_field, edit=True, value=state.end_frame)
+            self.update_render_layers(state, render_layers_layout)
+        
+        #pm.checkBoxGrp(generate_tx_check, edit=True, enable1=True)
         self.apply_state_to_ui = apply_state_to_ui
+        self.apply_state_to_ui(self.state)
             
-
+    
+    def update_render_layers(self,state: SubmitUIState, parent):
+        for layer in state.render_layers:
+            render_layers_row = pm.rowLayout(
+                numberOfColumns=4,
+                columnWidth=[
+                    [1, self.TICKBOX_WIDTH],
+                    [2, self.LABEL_WIDTH - self.TICKBOX_WIDTH],
+                ],
+                parent=parent,
+            )
+            render_layer_check = pm.checkBox(label="", parent=render_layers_row)
+            render_layer_label = pm.text(label=layer.name, parent=render_layers_row)
+            render_layer_packet_label = pm.text(
+                label="Packet Size", parent=render_layers_row
+            )
+            render_layer_packet_entry = pm.textField(parent=render_layers_row)
+        print(pm.columnLayout(parent,query=True, childArray=True))
         
     def createFilepathUI(self, label, parent):
         filepath_row_layout = pm.rowLayout(
@@ -181,6 +188,10 @@ class SubmitUI:
 
 
 test_state = SubmitUIState()
+test_state.generate_tx = True
+test_state.force_tx = False
+test_state.start_frame = 10
+test_state.end_frame = 20
 test_state.render_layers = [
     RenderLayer("noCarliarBackLayer", True, 12),
     RenderLayer("TEST2", False, 12),

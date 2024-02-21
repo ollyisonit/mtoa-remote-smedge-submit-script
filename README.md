@@ -24,5 +24,6 @@ For config settings, it needs a UI with:
 SO the steps are:
 
 1. Build the UI
-2. Make the UI persist (ie. hook it up)
-3. Add a button to reset config (delete custom node)
+2. Make the UI persist (ie. hook it up to custom nodes/exiting attributes)
+3. Tooltips!
+4. Add a button to reset config (delete custom node)

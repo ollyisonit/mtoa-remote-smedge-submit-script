@@ -16,6 +16,7 @@ class RenderLayer:
 
 
 class SubmitUIState:
+    """Tracks state of UI and saves/loads state to the necessary nodes."""
     render_layers: list[RenderLayer] = []
     generate_tx: bool = False
     force_tx: bool = True
@@ -42,6 +43,7 @@ class SubmitUIState:
 
 
 class SubmitUI:
+    """Visual component of UI. Responds to user input and updates internal state as necessary."""
     main_window = None
     state: SubmitUIState = None
     WINDOW_ID = "dninoSmedgeSubmit"

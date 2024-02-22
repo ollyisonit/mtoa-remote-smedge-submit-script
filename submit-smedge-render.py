@@ -26,7 +26,7 @@ class RenderLayer:
 
 class SubmitUIState:
     """Tracks state of UI and saves/loads state to the necessary nodes."""
-    render_layers: dict[str, RenderLayer] = []
+    render_layers: list[RenderLayer] = []
     generate_tx: bool = False
     force_tx: bool = True
     network_project_location: str = None
@@ -42,6 +42,53 @@ class SubmitUIState:
         pass
 
 
+class RenderLayerUI:
+    render_layers_row = None
+    render_layer_checkbox = None
+    render_layer_label = None
+    render_layer_packet_label = None
+    render_layer_packet_input = None
+
+    def __init__(self, parent):
+        self.render_layers_row = pm.rowLayout(
+            numberOfColumns=4,
+            columnWidth=[
+                [1, SubmitUI.TICKBOX_WIDTH],
+                [2, SubmitUI.LABEL_WIDTH - SubmitUI.TICKBOX_WIDTH],
+            ],
+            parent=parent,
+        )
+        self.render_layer_checkbox = pm.checkBox(
+            label="", parent=self.render_layers_row, changeCommand=lambda _: self.update_disabled())
+        self.render_layer_label = pm.text(parent=self.render_layers_row)
+        self.render_layer_packet_label = pm.text(
+            label="Packet Size", parent=self.render_layers_row
+        )
+        self.render_layer_packet_input = pm.intField(
+            parent=self.render_layers_row)
+
+    def update_disabled(self):
+        is_enabled = pm.checkBox(
+            self.render_layer_checkbox, query=True, value=True)
+        pm.text(self.render_layer_label, edit=True, enable=is_enabled)
+        pm.text(self.render_layer_packet_label,
+                edit=True, enable=is_enabled)
+        pm.intField(self.render_layer_packet_input,
+                    edit=True, enable=is_enabled)
+
+    def update(self, layer: RenderLayer):
+        pm.checkBox(self.render_layer_checkbox,
+                    edit=True, value=layer.enabled)
+        pm.text(self.render_layer_label, edit=True, label=layer.name)
+        pm.intField(self.render_layer_packet_input,
+                    edit=True, value=layer.packet_size)
+        self.update_disabled()
+        return self
+
+    def delete(self):
+        pm.delete(self.render_layers_row)
+
+
 class SubmitUI:
     """Visual component of UI. Responds to user input and updates internal state as necessary."""
     WINDOW_ID = "dninoSmedgeSubmit"
@@ -51,7 +98,7 @@ class SubmitUI:
     main_window = None
     state: SubmitUIState = None
 
-    current_render_layers: dict[str, 'RenderLayerUI'] = {}
+    ui_render_layers: dict[str, RenderLayerUI] = {}
     render_layers_layout = None
     generate_tx_check = None
     force_tx_check = None
@@ -62,52 +109,6 @@ class SubmitUI:
     exclude_dir_input = None
     close_button = None
     generate_config = None
-
-    class RenderLayerUI:
-        render_layers_row = None
-        render_layer_checkbox = None
-        render_layer_label = None
-        render_layer_packet_label = None
-        render_layer_packet_input = None
-
-        def __init__(self, parent):
-            self.render_layers_row = pm.rowLayout(
-                numberOfColumns=4,
-                columnWidth=[
-                    [1, SubmitUI.TICKBOX_WIDTH],
-                    [2, SubmitUI.LABEL_WIDTH - SubmitUI.TICKBOX_WIDTH],
-                ],
-                parent=parent,
-            )
-            self.render_layer_checkbox = pm.checkBox(
-                label="", parent=self.render_layers_row, changeCommand=lambda _: self.update_disabled())
-            self.render_layer_label = pm.text(parent=self.render_layers_row)
-            self.render_layer_packet_label = pm.text(
-                label="Packet Size", parent=self.render_layers_row
-            )
-            self.render_layer_packet_input = pm.intField(
-                parent=self.render_layers_row)
-
-        def update_disabled(self):
-            is_enabled = pm.checkBox(
-                self.render_layer_checkbox, query=True, value=True)
-            pm.text(self.render_layer_label, edit=True, enable=is_enabled)
-            pm.text(self.render_layer_packet_label,
-                    edit=True, enable=is_enabled)
-            pm.intField(self.render_layer_packet_input,
-                        edit=True, enable=is_enabled)
-
-        def update(self, layer: RenderLayer):
-            pm.checkBox(self.render_layer_checkbox,
-                        edit=True, value=layer.enabled)
-            pm.text(self.render_layer_label, edit=True, label=layer.name)
-            pm.intField(self.render_layer_packet_input,
-                        edit=True, value=layer.packet_size)
-            self.update_disabled()
-            return self
-
-        def delete(self):
-            pm.delete(self.render_layers_row)
 
     def __init__(self, state: SubmitUIState,
                  onClose: Callable[[SubmitUIState], None],
@@ -217,7 +218,12 @@ class SubmitUI:
         pm.checkBoxGrp(self.force_tx_check, edit=True, value1=state.force_tx)
         pm.intField(self.start_frame_field, edit=True, value=state.start_frame)
         pm.intField(self.end_frame_field, edit=True, value=state.end_frame)
-        self.update_render_layers(state, self.render_layers_layout)
+        for layer_ui in self.ui_render_layers.values():
+            layer_ui.delete()
+        for layer_state in state.render_layers:
+            layer_ui = RenderLayerUI(self.render_layers_layout)
+            layer_ui.update(layer_state)
+            self.ui_render_layers[layer_state.name] = layer_ui
         pm.textField(self.project_dir_input, edit=True,
                      text=state.network_project_location)
         pm.textField(self.render_dir_input, edit=True,
@@ -231,20 +237,25 @@ class SubmitUI:
             self.generate_tx_check, query=True, value1=True)
         self.state.force_tx = pm.checkBoxGrp(
             self.force_tx_check, query=True, value1=True)
-
+        self.state.start_frame = pm.checkBoxGrp(
+            self.start_frame_field, query=True, value=True)
+        self.state.end_frame = pm.checkBoxGrp(
+            self.end_frame_field, query=True, value=True)
+        render_layers = []
+        for layer_name, layer_ui in self.ui_render_layers.items():
+            render_layers.append(RenderLayer(layer_name,
+                                             pm.checkBox(
+                                                 layer_ui.render_layer_checkbox, query=True, value=True),
+                                             pm.intFieldGrp(
+                                                 layer_ui.render_layer_packet_input, query=True, value=True)))
+        self.state.render_layers = render_layers
+        self.state.network_project_location = pm.textField(
+            self.project_dir_input, query=True, text=True)
+        self.state.network_render_location = pm.textField(
+            self.render_dir_input, query=True, text=True)
+        self.state.exclude_directories = pm.textFieldGrp(
+            self.exclude_dir_input, query=True, text=True).split(",")
         return self.state
-
-    def update_render_layers(self, state: SubmitUIState, parent):
-        for layer_name, layer_ui in self.current_render_layers.items():
-            if not layer_name in [l.name for l in state.render_layers]:
-                layer_ui.delete()
-                self.current_render_layers.pop(layer_name)
-
-        for layer in state.render_layers:
-            if not layer.name in self.current_render_layers.keys():
-                self.current_render_layers[layer.name] = self.RenderLayerUI(
-                    parent)
-            self.current_render_layers[layer.name].update(layer)
 
     def createFilepathUI(self, label, parent):
         filepath_row_layout = pm.rowLayout(

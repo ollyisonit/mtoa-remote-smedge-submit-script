@@ -32,15 +32,4 @@ SO the steps are:
 
 **Where I'm At Right Now**
 
-Working on the function that applies the state to the UI. I'm thinking that basically the lifecycle will be this:
-
-- Window is launched
-- Load state
-- Build UI window
-- Apply state
-- Each time a control is clicked, update the state and then apply the state (if needed, might not need to apply the state when dealing with the text boxes)
-- When the window is closed, save the state
-
-Having trouble with updating the render layers, since they're dynamically generated. I'm thinking of first digging through the children and getting the tooltips of all the currently existing render layer ui elements, then using that information to remove the ones that no longer exist, then loop through the state's list of render layers and update the layer ui if it exists or creating a new one if it doesn't. Also set enable=False to grey out other controls if the render layer is disabled
-
-- Then for the "Generate Config" command it closes, syncs, and generates the file
+The ui has methods that sync it to the state and vice-versa. I'm not using callbacks because they're too complicated and messy. Instead, I'm going to make it apply the state to the UI on open and the UI to the state on close. This also means the state needs to load itself from its special node when it opens. When generate is clicked, it should validate the state, then save the state, then run the script I wrote. 

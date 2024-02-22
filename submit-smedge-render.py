@@ -266,9 +266,17 @@ class SubmitUI:
         )
         filepath_label = pm.text(label=label, parent=filepath_row_layout)
         filepath_input = pm.textField(parent=filepath_row_layout)
+
+        def choose_file():
+            path: str = pm.fileDialog2(
+                caption=label, dialogStyle=1, fileMode=3)[0]
+            print(path)
+            pm.textField(filepath_input, edit=True, text=path)
+
         filepath_button = pm.symbolButton(
-            image="navButtonBrowse.xpm", parent=filepath_row_layout
+            image="navButtonBrowse.xpm", parent=filepath_row_layout, command=lambda _: choose_file()
         )
+
         return filepath_input
 
     def show(self):

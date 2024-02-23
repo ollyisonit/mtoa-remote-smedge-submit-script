@@ -41,46 +41,52 @@ class SubmitUIState:
     START_FRAME_ATTR = "start_frame"
     END_FRAME_ATTR = "end_frame"
 
-    def create_storage_node(self):
-        """Creates the Maya node used to store configuration data. 
-        Calling this when the storage node already exists will do nothing."""
-        if not pm.objExists(self.NODE_ID):
-            pm.createNode("network", name=self.NODE_ID, skipSelect=True)
-            pm.addAttr(self.NODE_ID,
-                       shortName=self.RENDER_LAYER_NAME_ATTR,
-                       dataType="stringArrray")
-            pm.addAttr(self.NODE_ID,
-                       shortName=self.RENDER_LAYER_ENABLED_ATTR,
-                       dataType="boolArray")  # Int32Array otherwise
-            pm.addAttr(self.NODE_ID,
-                       shortName=self.RENDER_LAYER_PACKET_SIZE_ATTR,
-                       dataType="Int32Array")
-            pm.addAttr(self.NODE_ID,
-                       shortName=self.GENERATE_TX_ATTR,
-                       dataType="bool")
-            pm.addAttr(self.NODE_ID,
-                       shortName=self.FORCE_TX_ATTR,
-                       dataType="bool")
-            pm.addAttr(self.NODE_ID,
-                       shortName=self.NETWORK_PROJECT_LOCATION_ATTR,
-                       dataType="string")
-            pm.addAttr(self.NODE_ID,
-                       shortName=self.NETWORK_RENDER_LOCATION_ATTR,
-                       dataType="string")
-            pm.addAttr(self.NODE_ID,
-                       shortName=self.EXCLUDE_DIRECTORIES_LOCATION_ATTR,
-                       dataType="stringArray")
-            pm.addAttr(self.NODE_ID,
-                       shortName=self.START_FRAME_ATTR,
-                       dataType="long")
-            pm.addAttr(self.NODE_ID,
-                       shortName=self.END_FRAME_ATTR,
-                       dataType="long")
-            # Save default values
-            self.save_to_node()
+    def create_storage_node(self, deleteExisting: bool = False):
+        """Creates the Maya node used to store configuration data.
+        Args:
+            deleteExisting (bool): True deletes existing node, False skips creation if node exists
+        """
+        if pm.objExists(self.NODE_ID):
+            if deleteExisting:
+                pm.delete(self.NODE_ID)
+            else:
+                return self
+        pm.createNode("network", name=self.NODE_ID, skipSelect=True)
+        pm.addAttr(self.NODE_ID,
+                   shortName=self.RENDER_LAYER_NAME_ATTR,
+                   dataType="stringArray")
+        pm.addAttr(self.NODE_ID,
+                   shortName=self.RENDER_LAYER_ENABLED_ATTR,
+                   dataType="Int32Array")  # Int32Array otherwise
+        pm.addAttr(self.NODE_ID,
+                   shortName=self.RENDER_LAYER_PACKET_SIZE_ATTR,
+                   dataType="Int32Array")
+        pm.addAttr(self.NODE_ID,
+                   shortName=self.GENERATE_TX_ATTR,
+                   attributeType="bool")
+        pm.addAttr(self.NODE_ID,
+                   shortName=self.FORCE_TX_ATTR,
+                   attributeType="bool")
+        pm.addAttr(self.NODE_ID,
+                   shortName=self.NETWORK_PROJECT_LOCATION_ATTR,
+                   dataType="string")
+        pm.addAttr(self.NODE_ID,
+                   shortName=self.NETWORK_RENDER_LOCATION_ATTR,
+                   dataType="string")
+        pm.addAttr(self.NODE_ID,
+                   shortName=self.EXCLUDE_DIRECTORIES_LOCATION_ATTR,
+                   dataType="stringArray")
+        pm.addAttr(self.NODE_ID,
+                   shortName=self.START_FRAME_ATTR,
+                   attributeType="long")
+        pm.addAttr(self.NODE_ID,
+                   shortName=self.END_FRAME_ATTR,
+                   attributeType="long")
+        self.save_to_node()
+        return self
 
     def save_to_node(self):
-        self.create_storage_node()
+        self.create_storage_node(deleteExisting=False)
         pm.setAttr(f"{self.NODE_ID}.{self.RENDER_LAYER_NAME_ATTR}",
                    [l.name for l in self.render_layers])
         pm.setAttr(f"{self.NODE_ID}.{self.RENDER_LAYER_ENABLED_ATTR}",
@@ -97,15 +103,25 @@ class SubmitUIState:
                    self.exclude_directories)
         pm.setAttr(f"{self.NODE_ID}.{self.START_FRAME_ATTR}", self.start_frame)
         pm.setAttr(f"{self.NODE_ID}.{self.END_FRAME_ATTR}", self.end_frame)
+        return self
 
     def load_from_node(self):
-        self.create_storage_node()
+        # Keep default values if loading for the first time
+        if not pm.objExists(self.NODE_ID):
+            self.create_storage_node(deleteExisting=False)
+            return self
         render_layer_names = pm.getAttr(
             f"{self.NODE_ID}.{self.RENDER_LAYER_NAME_ATTR}")
+        if render_layer_names == None:
+            render_layer_names = []
         render_layer_enableds = pm.getAttr(
             f"{self.NODE_ID}.{self.RENDER_LAYER_ENABLED_ATTR}")
+        if render_layer_enableds == None:
+            render_layer_enableds = []
         render_layer_packet_sizes = pm.getAttr(
             f"{self.NODE_ID}.{self.RENDER_LAYER_PACKET_SIZE_ATTR}")
+        if render_layer_packet_sizes == None:
+            render_layer_packet_sizes = []
         self.render_layers = []
         for i in range(len(render_layer_names)):
             self.render_layers.append(
@@ -120,9 +136,20 @@ class SubmitUIState:
             f"{self.NODE_ID}.{self.NETWORK_RENDER_LOCATION_ATTR}")
         self.exclude_directories = pm.getAttr(
             f"{self.NODE_ID}.{self.EXCLUDE_DIRECTORIES_LOCATION_ATTR}")
+        if self.exclude_directories == None:
+            self.exclude_directories = []
         self.start_frame = pm.getAttr(
             f"{self.NODE_ID}.{self.START_FRAME_ATTR}")
         self.end_frame = pm.getAttr(f"{self.NODE_ID}.{self.END_FRAME_ATTR}")
+
+        existing_render_layers = pm.ls(type='renderLayer')
+        self.render_layers = list(
+            filter(lambda l: l.name in existing_render_layers,
+                   self.render_layers))
+        for layername in existing_render_layers:
+            if not layername in [l.name for l in self.render_layers]:
+                self.render_layers.append(RenderLayer(layername, True, 1))
+        return self
 
 
 class RenderLayerUI:
@@ -257,7 +284,7 @@ class SubmitUI:
 
         render_layers_frame = pm.frameLayout(
             "Enabled Render Layers",
-            collapsable=False,
+            collapsable=True,
             marginHeight=5,
             parent=render_options_layout,
         )
@@ -379,15 +406,15 @@ class SubmitUI:
         pm.showWindow(self.main_window)
 
 
-test_state = SubmitUIState()
-test_state.generate_tx = True
-test_state.force_tx = False
-test_state.start_frame = 10
-test_state.end_frame = 20
-test_state.render_layers = [
-    RenderLayer("noCarliarBackLayer", True, 12),
-    RenderLayer("TEST2", False, 143),
-]
-submit_ui = SubmitUI(test_state, lambda x: None, lambda x: None,
-                     lambda x: None)
+# test_state = SubmitUIState()
+# test_state.generate_tx = True
+# test_state.force_tx = False
+# test_state.start_frame = 10
+# test_state.end_frame = 20
+# test_state.render_layers = [
+#     RenderLayer("noCarliarBackLayer", True, 12),
+#     RenderLayer("TEST2", False, 143),
+# ]
+state = SubmitUIState().load_from_node()
+submit_ui = SubmitUI(state, lambda x: None, lambda x: None, lambda x: None)
 submit_ui.show()

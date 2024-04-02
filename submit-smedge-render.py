@@ -27,7 +27,7 @@ class SubmitUIState:
     exclude_directories: list[str] = ["autosave", "incrementalSave", "images"]
     start_frame: int = 0
     end_frame: int = 1
-    NODE_ID = "dninoSmedgeSubmit_config"
+    NODE_ID = "ollyisonitSmedgeSubmit_config"
     # Render layers are stored as 3 separate arrays where all values with the same index
     # correspond to the same object.
     RENDER_LAYER_NAME_ATTR = "render_layers_names"
@@ -203,7 +203,7 @@ class RenderLayerUI:
 
 class SubmitUI:
     """Visual component of UI. Responds to user input and updates internal state as necessary."""
-    WINDOW_ID = "dninoSmedgeSubmit_UI"
+    WINDOW_ID = "ollyisonitSmedgeSubmit_UI"
     LABEL_WIDTH = 200
     TICKBOX_WIDTH = 30
     MARGIN = 4
@@ -232,6 +232,10 @@ class SubmitUI:
     def build_ui(self, onClose: Callable[[SubmitUIState], None],
                  validate: Callable[[SubmitUIState], Optional[str]],
                  submit: Callable[[SubmitUIState], None]):
+
+        # Without this extra query the state will not be reported correctly the first time Maya opens
+        pm.window(self.WINDOW_ID, exists=True)
+
         if pm.window(self.WINDOW_ID, exists=True):
             cmds.deleteUI(self.WINDOW_ID, window=True)
 

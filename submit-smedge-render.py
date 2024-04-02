@@ -109,6 +109,7 @@ class SubmitUIState:
         # Keep default values if loading for the first time
         if not pm.objExists(self.NODE_ID):
             self.create_storage_node(deleteExisting=False)
+            self.load_layers()
             return self
         render_layer_names = pm.getAttr(
             f"{self.NODE_ID}.{self.RENDER_LAYER_NAME_ATTR}")
@@ -142,6 +143,10 @@ class SubmitUIState:
             f"{self.NODE_ID}.{self.START_FRAME_ATTR}")
         self.end_frame = pm.getAttr(f"{self.NODE_ID}.{self.END_FRAME_ATTR}")
 
+        self.load_layers()
+        return self
+
+    def load_layers(self):
         existing_render_layers = pm.ls(type='renderLayer')
         self.render_layers = list(
             filter(lambda l: l.name in existing_render_layers,
@@ -149,7 +154,6 @@ class SubmitUIState:
         for layername in existing_render_layers:
             if not layername in [l.name for l in self.render_layers]:
                 self.render_layers.append(RenderLayer(layername, True, 1))
-        return self
 
 
 class RenderLayerUI:

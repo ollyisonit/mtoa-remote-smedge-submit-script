@@ -39,7 +39,7 @@ The ui has methods that sync it to the state and vice-versa. I'm not using callb
 - [x] Fix bug where layers don't show up the first time you open the window and are only added after it's saved for the first time
 - [x] Make the state get saved after every value is edited (not performant? cry me a river it's literally five strings)
 - [ ] Make the generate button:
-  - [ ] Validate state
+  - [x] Validate state
   - [ ] Run script
 - [ ] Write README. 
   - [ ] Don't forget to mention that this only works on windows because it uses `robocopy` to handle file syncing.

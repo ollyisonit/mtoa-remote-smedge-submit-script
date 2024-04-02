@@ -155,6 +155,19 @@ class SubmitUIState:
             if not layername in [l.name for l in self.render_layers]:
                 self.render_layers.append(RenderLayer(layername, True, 1))
 
+    def validate_state(self) -> Optional[str]:
+        """Returns string message containing reason why state is invalid, or None if state is valid"""
+        if self.start_frame > self.end_frame:
+            return "Start frame must be less than end frame!"
+        for layer in self.render_layers:
+            if layer.packet_size < 1:
+                return f"Packet size for layer {layer.name} must be at least 1!"
+        if not Path.exists(self.network_project_location):
+            return f"Network project location '{self.network_project_location}' not found!"
+        if not Path.exists(self.network_render_location):
+            return f"Network render location '{self.network_render_location}' not found!"
+        return None
+
 
 class RenderLayerUI:
     render_layers_row = None
@@ -322,8 +335,10 @@ class SubmitUI:
         self.close_button = pm.button(label="Save and Close",
                                       parent=confirm_buttons_form,
                                       command=lambda _: self.close())
-        self.generate_config = pm.button(label="Generate Config and Sync",
-                                         parent=confirm_buttons_form)
+        self.generate_config = pm.button(
+            label="Generate Config and Sync",
+            parent=confirm_buttons_form,
+            command=lambda _: self.generate_config_and_sync())
         pm.formLayout(
             confirm_buttons_form,
             edit=True,
@@ -399,6 +414,13 @@ class SubmitUI:
     def close(self):
         self.apply_and_save()
         cmds.deleteUI(self.WINDOW_ID, window=True)
+
+    def generate_config_and_sync(self):
+        self.apply_and_save()
+        err = self.state.validate_state()
+        if err:
+            cmds.confirmDialog(message=err, dismissString="OK")
+            return
 
     def createFilepathUI(self, label, parent):
         filepath_row_layout = pm.rowLayout(

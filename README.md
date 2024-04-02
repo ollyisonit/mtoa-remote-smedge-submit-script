@@ -32,4 +32,15 @@ SO the steps are:
 
 **Where I'm At Right Now**
 
+It looks like the way other Maya UI elements work is that they modify the state directly as they are edited, so I should probably make mine do that too.
+
 The ui has methods that sync it to the state and vice-versa. I'm not using callbacks because they're too complicated and messy. Instead, I'm going to make it apply the state to the UI on open and the UI to the state on close. This also means the state needs to load itself from its special node when it opens. When generate is clicked, it should validate the state, then save the state, then run the script I wrote. 
+
+- [ ] Fix bug where layers don't show up the first time you open the window and are only added after it's saved for the first time
+- [ ] Make the state get saved after every value is edited (not performant? cry me a river it's literally five strings)
+- [ ] Make the generate button:
+  - [ ] Validate state
+  - [ ] Run script
+- [ ] Write README. 
+  - [ ] Don't forget to mention that this only works on windows because it uses `robocopy` to handle file syncing.
+  - [ ] Link to the MtoA typo fix since this Smedge config will be broken by it

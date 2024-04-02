@@ -244,7 +244,9 @@ class SubmitUI:
             title="Submit Smedge Job",
             resizeToFitChildren=True,
         )
+
         cmds.setUITemplate("OptionsTemplate", pushTemplate=True)
+
         main_layout_form = pm.formLayout(parent=self.main_window)
         main_layout = pm.columnLayout(parent=main_layout_form,
                                       adjustableColumn=True)
@@ -254,6 +256,7 @@ class SubmitUI:
                                   [main_layout, "right", self.MARGIN],
                                   [main_layout, "top", self.MARGIN],
                                   [main_layout, "bottom", self.MARGIN]])
+
         render_options_frame = pm.frameLayout(
             "Render Options",
             collapsable=False,
@@ -276,6 +279,7 @@ class SubmitUI:
             parent=render_options_layout,
             annotation=("(Arnold) Errors if TX files are missing. Generate "
                         "TX files in Arnold>Utilities>TX Manager"))
+
         frame_range_row = pm.rowLayout(
             numberOfColumns=4,
             columnWidth=[1, self.LABEL_WIDTH],
@@ -310,8 +314,10 @@ class SubmitUI:
             annotation=("Comma separated list of directories to exclude when "
                         "syncing project to network directory."))
         confirm_buttons_form = pm.formLayout(parent=main_layout)
+
         self.close_button = pm.button(label="Close",
-                                      parent=confirm_buttons_form)
+                                      parent=confirm_buttons_form,
+                                      command=lambda _: self.close())
         self.generate_config = pm.button(label="Generate Config and Sync",
                                          parent=confirm_buttons_form)
         pm.formLayout(
@@ -357,12 +363,15 @@ class SubmitUI:
         self.state.force_tx = pm.checkBoxGrp(self.force_tx_check,
                                              query=True,
                                              value1=True)
-        self.state.start_frame = pm.checkBoxGrp(self.start_frame_field,
-                                                query=True,
-                                                value=True)
-        self.state.end_frame = pm.checkBoxGrp(self.end_frame_field,
-                                              query=True,
-                                              value=True)
+        print("START FRAME")
+        self.state.start_frame = pm.intField(self.start_frame_field,
+                                             query=True,
+                                             value=True)
+        print("END FRAME")
+        self.state.end_frame = pm.intField(self.end_frame_field,
+                                           query=True,
+                                           value=True)
+        print("LAYER START")
         render_layers = []
         for layer_name, layer_ui in self.ui_render_layers.items():
             render_layers.append(
@@ -371,9 +380,10 @@ class SubmitUI:
                     pm.checkBox(layer_ui.render_layer_checkbox,
                                 query=True,
                                 value=True),
-                    pm.intFieldGrp(layer_ui.render_layer_packet_input,
-                                   query=True,
-                                   value=True)))
+                    pm.intField(layer_ui.render_layer_packet_input,
+                                query=True,
+                                value=True)))
+        print("LAYERS FOUND")
         self.state.render_layers = render_layers
         self.state.network_project_location = pm.textField(
             self.project_dir_input, query=True, text=True)
@@ -382,6 +392,13 @@ class SubmitUI:
         self.state.exclude_directories = pm.textFieldGrp(
             self.exclude_dir_input, query=True, text=True).split(",")
         return self.state
+
+    def apply_and_save(self):
+        self.apply_ui_to_state().save_to_node()
+
+    def close(self):
+        self.apply_and_save()
+        cmds.deleteUI(self.WINDOW_ID, window=True)
 
     def createFilepathUI(self, label, parent):
         filepath_row_layout = pm.rowLayout(

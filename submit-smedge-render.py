@@ -1,3 +1,4 @@
+import os
 import pymel.core as pm
 import os.path as Path
 import maya.cmds as cmds
@@ -449,15 +450,35 @@ class SubmitUI:
         pm.showWindow(self.main_window)
 
 
-# test_state = SubmitUIState()
-# test_state.generate_tx = True
-# test_state.force_tx = False
-# test_state.start_frame = 10
-# test_state.end_frame = 20
-# test_state.render_layers = [
-#     RenderLayer("noCarliarBackLayer", True, 12),
-#     RenderLayer("TEST2", False, 143),
-# ]
+class ProjectManager:
+    """This class contains the functions that handle all of the file syncing and config generation"""
+
+    @staticmethod
+    def find_project(start_dir: Path) -> Path:
+        cur_dir = start_dir
+        while len(cur_dir.parents) > 0:
+            if cur_dir.joinpath('workspace.mel').exists():
+                return cur_dir
+            cur_dir = cur_dir.parent
+        raise Exception("Maya project not found!")
+
+    @staticmethod
+    def package_project(network_project_directory: str,
+                        exclude_directories: list[str]):
+        scene_path = Path(cmds.file(q=True, sn=True)).absolute()
+        project_path = ProjectManager.find_project(scene_path)
+
+        exclusions = ""
+        for excl in exclude_directories:
+            exclusions += f"/xd {excl}"
+
+        os.system(
+            fr'robocopy "{project_path}" "{network_project_directory}" /XO /MIR {exclusions}'
+        )
+
+        pass
+
+
 state = SubmitUIState().load_from_node()
 submit_ui = SubmitUI(state, lambda x: None, lambda x: None, lambda x: None)
 submit_ui.show()

@@ -319,7 +319,7 @@ class SubmitUI:
                         "syncing project to network directory."))
         confirm_buttons_form = pm.formLayout(parent=main_layout)
 
-        self.close_button = pm.button(label="Close",
+        self.close_button = pm.button(label="Save and Close",
                                       parent=confirm_buttons_form,
                                       command=lambda _: self.close())
         self.generate_config = pm.button(label="Generate Config and Sync",
@@ -367,15 +367,12 @@ class SubmitUI:
         self.state.force_tx = pm.checkBoxGrp(self.force_tx_check,
                                              query=True,
                                              value1=True)
-        print("START FRAME")
         self.state.start_frame = pm.intField(self.start_frame_field,
                                              query=True,
                                              value=True)
-        print("END FRAME")
         self.state.end_frame = pm.intField(self.end_frame_field,
                                            query=True,
                                            value=True)
-        print("LAYER START")
         render_layers = []
         for layer_name, layer_ui in self.ui_render_layers.items():
             render_layers.append(
@@ -387,7 +384,6 @@ class SubmitUI:
                     pm.intField(layer_ui.render_layer_packet_input,
                                 query=True,
                                 value=True)))
-        print("LAYERS FOUND")
         self.state.render_layers = render_layers
         self.state.network_project_location = pm.textField(
             self.project_dir_input, query=True, text=True)

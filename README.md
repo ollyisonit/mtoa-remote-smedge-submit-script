@@ -37,7 +37,7 @@ It looks like the way other Maya UI elements work is that they modify the state 
 The ui has methods that sync it to the state and vice-versa. I'm not using callbacks because they're too complicated and messy. Instead, I'm going to make it apply the state to the UI on open and the UI to the state on close. This also means the state needs to load itself from its special node when it opens. When generate is clicked, it should validate the state, then save the state, then run the script I wrote. 
 
 - [x] Fix bug where layers don't show up the first time you open the window and are only added after it's saved for the first time
-- [ ] Make the state get saved after every value is edited (not performant? cry me a river it's literally five strings)
+- [x] Make the state get saved after every value is edited (not performant? cry me a river it's literally five strings)
 - [ ] Make the generate button:
   - [ ] Validate state
   - [ ] Run script

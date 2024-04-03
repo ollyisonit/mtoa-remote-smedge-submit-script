@@ -1,6 +1,8 @@
 # MtoA Remote Smedge Submit Script
 
-A cleaned-up version simple script I used to manage syncing my remote render directories and Smedge config files for my short film [Whittled Down](https://whittleddownfilm.ollyglenn.com/). This uses `robocopy` for file syncing, so it's Windows-only.
+A simple Maya script for syncing remote render directories and generating config files for the Smedge render manager. This uses `robocopy` for file syncing, so it's Windows-only.
+
+
 
 ## How It Works
 ![](readme-assets/UI-screenshot.PNG)

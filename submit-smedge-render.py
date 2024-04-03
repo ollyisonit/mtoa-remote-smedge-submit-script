@@ -1,6 +1,6 @@
 import os
 import pymel.core as pm
-import os.path as Path
+from pathlib import Path
 import maya.cmds as cmds
 from typing import Callable, Optional
 
@@ -163,9 +163,9 @@ class SubmitUIState:
         for layer in self.render_layers:
             if layer.packet_size < 1:
                 return f"Packet size for layer {layer.name} must be at least 1!"
-        if not Path.exists(self.network_project_location):
+        if not os.path.exists(self.network_project_location):
             return f"Network project location '{self.network_project_location}' not found!"
-        if not Path.exists(self.network_render_location):
+        if not os.path.exists(self.network_render_location):
             return f"Network render location '{self.network_render_location}' not found!"
         return None
 
@@ -422,6 +422,7 @@ class SubmitUI:
         if err:
             cmds.confirmDialog(message=err, dismissString="OK")
             return
+        ProjectManager.package_project(self.state)
 
     def createFilepathUI(self, label, parent):
         filepath_row_layout = pm.rowLayout(
@@ -463,18 +464,60 @@ class ProjectManager:
         raise Exception("Maya project not found!")
 
     @staticmethod
-    def package_project(network_project_directory: str,
-                        exclude_directories: list[str]):
+    def package_project(state: SubmitUIState):
         scene_path = Path(cmds.file(q=True, sn=True)).absolute()
-        project_path = ProjectManager.find_project(scene_path)
+        project_path = Path(ProjectManager.find_project(scene_path))
+
+        scene_path_from_project = Path(
+            os.path.relpath(scene_path, project_path))
 
         exclusions = ""
-        for excl in exclude_directories:
-            exclusions += f"/xd {excl}"
+        for excl in state.exclude_directories:
+            exclusions += f"/xd {excl} "
 
         os.system(
-            fr'robocopy "{project_path}" "{network_project_directory}" /XO /MIR {exclusions}'
+            fr'robocopy "{project_path}" "{state.network_project_location}" /XO /MIR {exclusions}'
         )
+
+        print(
+            fr'robocopy "{project_path}" "{state.network_project_location}" /XO /MIR {exclusions}'
+        )
+
+        render_prefix = cmds.getAttr('defaultRenderGlobals.imageFilePrefix')
+        rendername = render_prefix
+        if rendername == None:
+            rendername = ""
+        rendername = rendername.replace('<Scene>', scene_path.name)
+        if rendername == "":
+            rendername = scene_path.name
+
+        for render_layer in state.render_layers:
+            if render_layer.enabled:
+                smedge_path = Path(
+                    state.network_project_location
+                ).parent.joinpath(
+                    f'{rendername}_{render_layer.name.upper()}_SmedgeSettings.sj'
+                )
+                with open(smedge_path, 'w') as smedge_config:
+                    config_name = f"{scene_path.name}_{render_layer.name.upper()}"
+                    config_contents = f'''[4c8e3273-5d60-4d68-af28-23799ab7134c]
+                    ID = 4c8e3273-5d60-4d68-af28-23799ab7134c
+                    Type = 833c1fa9-fc0b-46da-920a-c4b74b92d5c1
+                    Name = {config_name}
+                    Project = {state.network_project_location}
+                    Scene = {Path(state.network_project_location).joinpath(scene_path_from_project)}
+                    RenderDir = {Path(state.network_render_location).joinpath(f'{rendername}_render').absolute()}
+                    Range = {state.start_frame}-{state.end_frame}
+                    Status = 0
+                    PacketSize = {render_layer.packet_size}
+                    FailureLimit = 0
+                    OvertimeKill = 0
+                    DistributeMode = 1
+                    Extra = -ai:txamm no -ai:txaum no -ai:txaun no -ai:txett yes -rl {render_layer.name}'''
+                    smedge_config.write(config_contents)
+                    print(
+                        f"Output smedge config: {smedge_path} \n {config_contents}"
+                    )
 
         pass
 

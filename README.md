@@ -12,4 +12,4 @@ Running the script gives you access to a UI you can use to set your render setti
 The TX file options rely on Arnold command line arguments that aren't configured properly in some versions of the MtoA plugin, so you may also need to install the [MtoA TX Typo Fix](https://github.com/ollyisonit/mtoa-tx-typo-fix)
 
 ## Installation
-Open `submit-smedge-render.py` in the Maya script editor, and then either run it directly or select `File > Save Script to Shelf...` to create a button for it.
+[Download](https://github.com/ollyisonit/mtoa-remote-smedge-submit-script/releases/latest) and open `submit-smedge-render.py` in the Maya script editor, and then either run it directly or select `File > Save Script to Shelf...` to create a button for it.

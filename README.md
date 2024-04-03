@@ -1,46 +1,13 @@
-TODO
+# MtoA Remote Smedge Submit Script
 
-OK so this script does two things:
+A cleaned-up version simple script I used to manage syncing my remote render directories and Smedge config files for my short film [Whittled Down](https://whittleddownfilm.ollyglenn.com/). This uses `robocopy` for file syncing, so it's Windows-only.
 
-1. Syncs Maya project to a network drive
-2. Writes out a custom Smedge config
+## How It Works
+![](readme-assets/UI-screenshot.PNG)
 
-For config settings, it needs a UI with:
+Running the script gives you access to a UI you can use to set your render settings. There are two parts to this script: it first uses `robocopy` to sync your Maya project to your network project directory, and then uses the other settings to generate a Smedge config file for each of your render layers. Smedge config files will be placed in the same directory as your network project. The names of your render output files will be the same as the ones set in your main render settings.
 
-- Make UI with:
-  - Output Project Location (stored on custom node)
-  - Output Render Location (stored on custom node)
-  - Render Layer Tickboxes with packet sizes (stored on custom node)
-    - actually just do this automatically based on renderable layers, have it generate a config for each one
-  - Generate TX (stored on custom node)
-  - Force TX (stored on custom node)
-  - AutoTX (stored on custom node, explain what this is)
-  - List of directory names to exclude (defaults to autosave,incrementalSave,images), just have it be a comma-separated string if you have commas in your file names then you have bigger issues (stored on custom node)
-  - Start frame/end frame (use the render globals node)
-- These need to be persisted, so store them as custom attributes on a node (seems like usually people use the network node for this), just call it something namespaced with _dnino and i should be fine
+The TX file options rely on Arnold command line arguments that aren't configured properly in some versions of the MtoA plugin, so you may also need to install the [MtoA TX Typo Fix](https://github.com/ollyisonit/mtoa-tx-typo-fix)
 
-
-
-SO the steps are:
-
-1. Build the UI
-2. Make the UI persist (ie. hook it up to custom nodes/exiting attributes)
-3. Tooltips!
-4. Add a button to reset config (delete custom node)
-
-
-
-**Where I'm At Right Now**
-
-It looks like the way other Maya UI elements work is that they modify the state directly as they are edited, so I should probably make mine do that too.
-
-The ui has methods that sync it to the state and vice-versa. I'm not using callbacks because they're too complicated and messy. Instead, I'm going to make it apply the state to the UI on open and the UI to the state on close. This also means the state needs to load itself from its special node when it opens. When generate is clicked, it should validate the state, then save the state, then run the script I wrote. 
-
-- [x] Fix bug where layers don't show up the first time you open the window and are only added after it's saved for the first time
-- [x] Make the state get saved after every value is edited (not performant? cry me a river it's literally five strings)
-- [ ] Make the generate button:
-  - [x] Validate state
-  - [ ] Run script
-- [ ] Write README. 
-  - [ ] Don't forget to mention that this only works on windows because it uses `robocopy` to handle file syncing.
-  - [ ] Link to the MtoA typo fix since this Smedge config will be broken by it
+## Installation
+Open `submit-smedge-render.py` in the Maya script editor, and then either run it directly or select `File > Save Script to Shelf...` to create a button for it.

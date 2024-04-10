@@ -2,7 +2,7 @@
 
 A simple Maya script for syncing remote render directories and generating config files for the Smedge render manager. This uses `robocopy` for file syncing, so it's Windows-only.
 
-
+https://github.com/ollyisonit/mtoa-remote-smedge-submit-script/assets/56850051/518b68a6-bd21-4295-8f35-9ed026904b4a
 
 ## How It Works
 ![](readme-assets/UI-screenshot.PNG)
